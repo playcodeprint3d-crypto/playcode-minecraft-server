@@ -115,25 +115,30 @@ fi
 if ! pgrep -f "server.jar" >/dev/null 2>&1; then
     echo "[+] Iniciando Minecraft PaperMC en background con 5GB de RAM..."
     cd "$SERVER_DIR"
-    nohup "$JAVA_BIN" -Xms2G -Xmx5G \
-        -XX:+UseG1GC \
-        -XX:+ParallelRefProcEnabled \
-        -XX:MaxGCPauseMillis=200 \
-        -XX:+UnlockExperimentalVMOptions \
-        -XX:+DisableExplicitGC \
-        -XX:+AlwaysPreTouch \
-        -XX:G1NewSizePercent=30 \
-        -XX:G1MaxNewSizePercent=40 \
-        -XX:G1ReservePercent=20 \
-        -XX:G1HeapWastePercent=5 \
-        -XX:G1MixedGCCountTarget=4 \
-        -XX:InitiatingHeapOccupancyPercent=15 \
-        -XX:G1MixedGCLiveThresholdPercent=90 \
-        -XX:G1RSetUpdatingPauseTimePercent=5 \
-        -XX:SurvivorRatio=32 \
-        -XX:+PerfDisableSharedMem \
-        -XX:MaxTenuringThreshold=1 \
-        -jar server.jar --nogui > /tmp/minecraft.log 2>&1 &
+    if command -v tmux >/dev/null 2>&1; then
+        tmux new-session -d -s minecraft "$JAVA_BIN -Xms2G -Xmx5G -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -jar server.jar --nogui"
+    else
+        nohup "$JAVA_BIN" -Xms2G -Xmx5G \
+            -XX:+UseG1GC \
+            -XX:+ParallelRefProcEnabled \
+            -XX:MaxGCPauseMillis=200 \
+            -XX:+UnlockExperimentalVMOptions \
+            -XX:+DisableExplicitGC \
+            -XX:+AlwaysPreTouch \
+            -XX:G1NewSizePercent=30 \
+            -XX:G1MaxNewSizePercent=40 \
+            -XX:G1ReservePercent=20 \
+            -XX:G1HeapWastePercent=5 \
+            -XX:G1MixedGCCountTarget=4 \
+            -XX:InitiatingHeapOccupancyPercent=15 \
+            -XX:G1MixedGCLiveThresholdPercent=90 \
+            -XX:G1RSetUpdatingPauseTimePercent=5 \
+            -XX:SurvivorRatio=32 \
+            -XX:+PerfDisableSharedMem \
+            -XX:MaxTenuringThreshold=1 \
+            -jar server.jar --nogui > /tmp/minecraft.log 2>&1 &
+    fi
+    sleep 3
     echo "[+] Servidor de Minecraft iniciado con éxito."
 else
     echo "[+] El servidor de Minecraft ya se encuentra en ejecución."
