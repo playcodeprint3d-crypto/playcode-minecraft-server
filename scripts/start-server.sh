@@ -18,8 +18,13 @@ if ! command -v playit >/dev/null 2>&1; then
     sudo chmod a+rx /usr/local/bin/playit 2>/dev/null || true
 fi
 
-# 1. Determinar versión de Minecraft
-MC_VERSION="${MINECRAFT_VERSION:-${MC_VERSION:-1.20.4}}"
+# 1. Determinar versión de Minecraft (desde LMS o variable de entorno)
+CONFIG_URL="https://edu.playcode.com.ar/wp-json/playcode/v1/minecraft-config"
+LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
+echo "[+] Consultando versión elegida por el alumno en LMS ($LOOKUP_QUERY)..."
+LMS_VERSION=$(curl -s --connect-timeout 4 "$CONFIG_URL?$LOOKUP_QUERY" 2>/dev/null | grep -o '"version":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)
+
+MC_VERSION="${LMS_VERSION:-${MINECRAFT_VERSION:-${MC_VERSION:-1.21.1}}}"
 echo "=========================================================="
 echo " [>] PLAY CODE MINECRAFT SERVER LAUNCHER"
 echo " [>] Versión solicitada: $MC_VERSION"

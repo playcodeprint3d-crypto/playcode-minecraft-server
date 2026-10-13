@@ -16,6 +16,25 @@ FRP_TOKEN="${FRP_AUTH_TOKEN:-PlayCodeMcSecret2026!}"
 REMOTE_PORT="${FRP_REMOTE_PORT:-25565}"
 CLIENT_NAME="${FRP_CLIENT_NAME:-mc-$(hostname | cut -c 1-12)}"
 
+# 0. Consultar configuración dinámica desde la plataforma Play Code
+CONFIG_URL="https://edu.playcode.com.ar/wp-json/playcode/v1/minecraft-config"
+LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
+echo "[+] Consultando configuración de red en Play Code LMS ($LOOKUP_QUERY)..."
+CFG_JSON=$(curl -s --connect-timeout 4 "$CONFIG_URL?$LOOKUP_QUERY" || true)
+
+if [ -n "$CFG_JSON" ]; then
+    FETCH_PORT=$(echo "$CFG_JSON" | grep -o '"port":[0-9]*' | head -n 1 | cut -d: -f2 || true)
+    FETCH_HOST=$(echo "$CFG_JSON" | grep -o '"relay_host":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)
+    if [ -n "$FETCH_PORT" ]; then
+        REMOTE_PORT="$FETCH_PORT"
+    fi
+    if [ -n "$FETCH_HOST" ]; then
+        FRP_SERVER="$FETCH_HOST"
+    fi
+fi
+
+echo "[+] Relay Host: $FRP_SERVER | Puerto Remoto Asignado: $REMOTE_PORT"
+
 # 1. Instalar binario de frpc si no existe
 if [ ! -x "$FRP_BIN" ]; then
     echo "[+] Descargando cliente oficial de FRP (frpc)..."
