@@ -23,6 +23,8 @@ RUN sed -i 's/main/main universe/g' /etc/apt/sources.list \
     procps \
     lsof \
     ca-certificates \
+    openssh-server \
+    sudo \
     python3 \
     python3-minimal \
     openjdk-8-jre-headless \
