@@ -42,9 +42,12 @@ RUN mkdir -p /opt/java-21 \
 # Por defecto java apunta a Java 17
 RUN update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java || true
 
-# 4. Instalar cliente oficial de Playit.gg
-RUN curl -SsL "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64" -o /usr/local/bin/playit \
-    && chmod a+rx /usr/local/bin/playit
+# 4. Instalar cliente oficial de FRP (frpc)
+RUN curl -SsL "https://github.com/fatedier/frp/releases/download/v0.61.0/frp_0.61.0_linux_amd64.tar.gz" -o /tmp/frp.tar.gz \
+    && tar -xzf /tmp/frp.tar.gz -C /tmp \
+    && mv /tmp/frp_*/frpc /usr/local/bin/ \
+    && chmod a+rx /usr/local/bin/frpc \
+    && rm -rf /tmp/frp*
 
 # 5. Usuario por defecto
 USER codespace

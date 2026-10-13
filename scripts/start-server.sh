@@ -87,10 +87,10 @@ fi
 echo "[+] Binario Java seleccionado: $JAVA_BIN"
 "$JAVA_BIN" -version 2>&1 | head -n 1
 
-# 6. Iniciar Playit.gg daemon si no está corriendo
-if ! pgrep -f "playit" >/dev/null 2>&1; then
-    echo "[+] Levantando daemon de Playit.gg..."
-    bash "$SCRIPT_DIR/playit-service.sh" || true
+# 6. Iniciar túnel de Play Code (FRP hacia Google Cloud) si no está corriendo
+if ! pgrep -f "frpc" >/dev/null 2>&1; then
+    echo "[+] Levantando túnel FRP con Google Cloud Relay..."
+    bash "$SCRIPT_DIR/frp-service.sh" || true
 fi
 
 # 7. Iniciar Service Control API en puerto 9000 si no está corriendo

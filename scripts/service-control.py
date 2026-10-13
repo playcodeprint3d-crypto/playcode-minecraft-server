@@ -71,14 +71,27 @@ def is_minecraft_running():
     except Exception:
         return False
 
-def read_playit_status():
-    if os.path.exists(PLAYIT_STATUS_FILE):
+TUNNEL_STATUS_FILE = "/tmp/tunnel_status.json"
+
+def read_tunnel_status():
+    if os.path.exists(TUNNEL_STATUS_FILE):
         try:
-            with open(PLAYIT_STATUS_FILE, "r") as f:
+            with open(TUNNEL_STATUS_FILE, "r") as f:
                 return json.load(f)
         except Exception:
             pass
-    return {"status": "offline", "claim_url": "", "public_address": ""}
+    if os.path.exists(PLAYIT_STATUS_FILE):
+        try:
+            with open(PLAYIT_STATUS_FILE, "r") as f:
+                data = json.load(f)
+                data["type"] = "playit"
+                return data
+        except Exception:
+            pass
+    return {"type": "none", "status": "offline", "public_address": ""}
+
+def read_playit_status():
+    return read_tunnel_status()
 
 def read_whitelist():
     players = []

@@ -268,7 +268,7 @@
       const ipElem = document.getElementById('ip-address');
 
       if (data.playit) {
-        if (data.playit.status === 'claim_needed' && data.playit.claim_url) {
+        if (data.playit.type === 'playit' && data.playit.status === 'claim_needed' && data.playit.claim_url) {
           claimCard.style.display = 'block';
           claimBtn.href = data.playit.claim_url;
         } else {
@@ -279,7 +279,7 @@
           currentIp = data.playit.public_address;
           ipElem.innerText = currentIp;
         } else {
-          ipElem.innerText = data.playit.claim_url ? "Pendiente de vinculación" : "Asignando túnel...";
+          ipElem.innerText = "Conectando al Relay de Play Code...";
         }
       }
 
