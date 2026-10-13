@@ -20,9 +20,16 @@ fi
 
 # 1. Determinar versión de Minecraft (desde LMS o variable de entorno)
 CONFIG_URL="https://edu.playcode.com.ar/wp-json/playcode/v1/minecraft-config"
-LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
-echo "[+] Consultando versión elegida por el alumno en LMS ($LOOKUP_QUERY)..."
-LMS_VERSION=$(curl -s --connect-timeout 4 "$CONFIG_URL?$LOOKUP_QUERY" 2>/dev/null | grep -o '"version":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)
+
+if [ -n "${PLAYCODE_USER_ID:-}" ]; then
+    LOOKUP_QUERY="user_id=${PLAYCODE_USER_ID}"
+    echo "[+] Consultando versión para user_id ${PLAYCODE_USER_ID}..."
+else
+    LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
+    echo "[+] Fallback: consultando versión por codespace/login ($LOOKUP_QUERY)..."
+fi
+
+LMS_VERSION=$(curl -s --connect-timeout 5 "${CONFIG_URL}?${LOOKUP_QUERY}" 2>/dev/null | grep -o '"version":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)
 
 MC_VERSION="${LMS_VERSION:-${MINECRAFT_VERSION:-${MC_VERSION:-1.21.1}}}"
 echo "=========================================================="
