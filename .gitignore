@@ -1,0 +1,13 @@
+# Ignorar mundos y archivos temporales pesados de Minecraft
+server/world/
+server/world_nether/
+server/world_the_end/
+server/logs/
+server/crash-reports/
+server/*.jar.tmp
+server/.installed_version
+*.log
+/tmp/playit_status.json
+.config/playit/
+__pycache__/
+*.pyc

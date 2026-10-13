@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Play Code — Panel de Servidor Minecraft</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #F8FAFC;
+      color: #001F4A;
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 30px 20px;
+      background-image: 
+        radial-gradient(#CBD5E1 1.2px, transparent 1.2px),
+        linear-gradient(to right, rgba(0, 31, 74, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 31, 74, 0.03) 1px, transparent 1px);
+      background-size: 24px 24px, 48px 48px, 48px 48px;
+    }
+    .wrapper { max-width: 820px; margin: 0 auto; }
+    .card {
+      background: #FFFFFF;
+      border: 2.5px solid #001F4A;
+      box-shadow: 6px 6px 0px #001F4A;
+      padding: 30px;
+      margin-bottom: 24px;
+    }
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #001F4A;
+      padding-bottom: 15px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+    }
+    .badge {
+      font-size: 13px;
+      font-weight: 800;
+      padding: 6px 14px;
+      border: 2px solid #001F4A;
+      box-shadow: 3px 3px 0px #001F4A;
+      text-transform: uppercase;
+    }
+    .badge-green { background: #22C55E; color: #FFFFFF; }
+    .badge-yellow { background: #FFE600; color: #001F4A; }
+    .badge-red { background: #FF6B6B; color: #FFFFFF; }
+    
+    .ip-box {
+      background: #001F4A;
+      color: #FFFFFF;
+      padding: 20px;
+      border: 2px solid #001F4A;
+      box-shadow: 4px 4px 0px #FFE600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    .ip-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .btn {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 10px 18px;
+      border: 2px solid #001F4A;
+      box-shadow: 3px 3px 0px #001F4A;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.1s ease;
+      background: #FFE600;
+      color: #001F4A;
+    }
+    .btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0px #001F4A;
+    }
+    .btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #001F4A;
+    }
+    .btn-coral { background: #FF6B6B; color: #FFFFFF; }
+    .btn-blue { background: #38BDF8; color: #001F4A; }
+    .btn-green { background: #22C55E; color: #FFFFFF; }
+
+    .claim-alert {
+      background: #FEF3C7;
+      border: 2.5px solid #001F4A;
+      box-shadow: 5px 5px 0px #D97706;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .claim-alert h3 { font-size: 16px; font-weight: 900; margin-bottom: 8px; color: #92400E; }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 900;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .whitelist-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .chip {
+      background: #EFF6FF;
+      border: 2px solid #001F4A;
+      box-shadow: 2px 2px 0px #001F4A;
+      padding: 6px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chip-delete {
+      cursor: pointer;
+      color: #DC2626;
+      font-weight: 900;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+    }
+    .input-text {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid #001F4A;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <!-- Tarjeta de Estado Principal -->
+  <div class="card">
+    <div class="header-bar">
+      <div>
+        <h1 class="title">🎮 Servidor de Minecraft</h1>
+        <p style="font-size: 13px; font-weight: 600; color: #64748B;">Laboratorio de Minecraft Play Code</p>
+      </div>
+      <div id="status-badge" class="badge badge-yellow">Conectando...</div>
+    </div>
+
+    <!-- Alerta de Vinculación de Playit (si se requiere) -->
+    <div id="claim-card" class="claim-alert" style="display: none;">
+      <h3>⚡ Vinculación Gratuita de Playit.gg Requerida</h3>
+      <p style="font-size: 14px; margin-bottom: 12px;">Para que tus amigos puedan conectarse sin instalar nada, autoriza este servidor en tu cuenta de Playit con un click:</p>
+      <a id="claim-btn" href="#" target="_blank" class="btn btn-green">🔗 Vincular Servidor en Playit.gg</a>
+    </div>
+
+    <!-- Caja de Dirección IP -->
+    <div class="ip-box">
+      <div>
+        <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px;">Dirección para tu Launcher:</div>
+        <div id="ip-address" class="ip-text">Obteniendo dirección...</div>
+      </div>
+      <button class="btn" onclick="copyIp()">📋 Copiar IP</button>
+    </div>
+
+    <!-- Información adicional -->
+    <div style="display: flex; gap: 20px; font-size: 13px; font-weight: 700;">
+      <div>Versión: <span id="server-version" style="color: #2563EB;">1.20.4</span></div>
+      <div>Modo: <span style="color: #059669;">Libre (No-Premium + Premium)</span></div>
+    </div>
+  </div>
+
+  <!-- Tarjeta de Lista Blanca / Amigos -->
+  <div class="card">
+    <div class="section-title">
+      🛡️ Lista Blanca (Solo Amigos Invitados)
+      <span id="whitelist-status-badge" class="badge" style="margin-left: auto; font-size: 11px;">Desactivada</span>
+    </div>
+    <p style="font-size: 13px; color: #475569; margin-bottom: 15px;">
+      Cuando activas la lista blanca, solo los amigos que agregues abajo podrán entrar a jugar en tu mundo.
+    </p>
+
+    <div style="margin-bottom: 15px;">
+      <button id="toggle-whitelist-btn" class="btn btn-blue" onclick="toggleWhitelist()">Activar Lista Blanca</button>
+    </div>
+
+    <div class="input-group">
+      <input type="text" id="friend-name" class="input-text" placeholder="Escribe el nombre de Minecraft de tu amigo...">
+      <button class="btn" onclick="addFriend()">+ Invitar Amigo</button>
+    </div>
+
+    <div id="whitelist-players" class="whitelist-grid">
+      <!-- Chips de amigos cargados dinámicamente -->
+    </div>
+  </div>
+
+  <!-- Tarjeta de Comandos Rápidos -->
+  <div class="card">
+    <div class="section-title">⚡ Acciones Rápidas de Administrador</div>
+    <div class="quick-actions">
+      <button class="btn" onclick="makeOp()">👑 Hacerme Administrador (/op)</button>
+      <button class="btn btn-blue" onclick="runCommand('time set day')">☀️ Hacer de Día</button>
+      <button class="btn btn-blue" onclick="runCommand('gamemode creative @a')">🎨 Modo Creativo</button>
+      <button class="btn btn-blue" onclick="runCommand('gamemode survival @a')">⚔️ Modo Supervivencia</button>
+      <button class="btn btn-coral" onclick="stopServer()">⏹ Detener Servidor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentIp = "";
+  let whitelistActive = false;
+
+  async function updateStatus() {
+    try {
+      const res = await fetch('/api/status');
+      const data = await res.json();
+
+      // Estado del servidor
+      const badge = document.getElementById('status-badge');
+      if (data.server_state === 'running') {
+        badge.className = 'badge badge-green';
+        badge.innerText = '🟢 EN LÍNEA';
+      } else {
+        badge.className = 'badge badge-red';
+        badge.innerText = '🔴 DETENIDO';
+      }
+
+      // Versión
+      if (data.version) {
+        document.getElementById('server-version').innerText = data.version;
+      }
+
+      // Playit
+      const claimCard = document.getElementById('claim-card');
+      const claimBtn = document.getElementById('claim-btn');
+      const ipElem = document.getElementById('ip-address');
+
+      if (data.playit) {
+        if (data.playit.status === 'claim_needed' && data.playit.claim_url) {
+          claimCard.style.display = 'block';
+          claimBtn.href = data.playit.claim_url;
+        } else {
+          claimCard.style.display = 'none';
+        }
+
+        if (data.playit.public_address) {
+          currentIp = data.playit.public_address;
+          ipElem.innerText = currentIp;
+        } else {
+          ipElem.innerText = data.playit.claim_url ? "Pendiente de vinculación" : "Asignando túnel...";
+        }
+      }
+
+      // Whitelist
+      if (data.whitelist) {
+        whitelistActive = data.whitelist.enabled;
+        const wlBadge = document.getElementById('whitelist-status-badge');
+        const wlBtn = document.getElementById('toggle-whitelist-btn');
+        if (whitelistActive) {
+          wlBadge.className = 'badge badge-green';
+          wlBadge.innerText = 'ACTIVADA';
+          wlBtn.innerText = 'Desactivar Lista Blanca';
+          wlBtn.className = 'btn btn-coral';
+        } else {
+          wlBadge.className = 'badge badge-yellow';
+          wlBadge.innerText = 'DESACTIVADA';
+          wlBtn.innerText = 'Activar Lista Blanca';
+          wlBtn.className = 'btn btn-blue';
+        }
+        renderWhitelist(data.whitelist.players || []);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function renderWhitelist(players) {
+    const container = document.getElementById('whitelist-players');
+    if (!players.length) {
+      container.innerHTML = '<span style="font-size: 13px; color: #94A3B8;">No hay amigos en la lista aún.</span>';
+      return;
+    }
+    container.innerHTML = players.map(p => `
+      <div class="chip">
+        <span>👤 ${p}</span>
+        <span class="chip-delete" onclick="removeFriend('${p}')">✕</span>
+      </div>
+    `).join('');
+  }
+
+  function copyIp() {
+    if (!currentIp || currentIp.includes('...')) {
+      alert('La dirección aún se está generando.');
+      return;
+    }
+    navigator.clipboard.writeText(currentIp);
+    alert('¡Dirección copiada! Pegala en el Multijugador de Minecraft: ' + currentIp);
+  }
+
+  async function toggleWhitelist() {
+    await fetch('/api/whitelist/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: !whitelistActive })
+    });
+    updateStatus();
+  }
+
+  async function addFriend() {
+    const input = document.getElementById('friend-name');
+    const name = input.value.trim();
+    if (!name) return;
+    await fetch('/api/whitelist/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player: name })
+    });
+    input.value = '';
+    updateStatus();
+  }
+
+  async function removeFriend(name) {
+    if (!confirm(`¿Remover a ${name} de la lista permitida?`)) return;
+    await fetch('/api/whitelist/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player: name })
+    });
+    updateStatus();
+  }
+
+  async function runCommand(cmd) {
+    await fetch('/api/command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: cmd })
+    });
+    alert('Comando enviado: ' + cmd);
+  }
+
+  async function makeOp() {
+    const nick = prompt('Ingresa tu nombre exacto de Minecraft:');
+    if (nick) runCommand('op ' + nick.trim());
+  }
+
+  async function stopServer() {
+    if (!confirm('¿Seguro que deseas detener el servidor de Minecraft?')) return;
+    await fetch('/api/server/stop', { method: 'POST' });
+    updateStatus();
+  }
+
+  // Actualizar periódicamente
+  updateStatus();
+  setInterval(updateStatus, 4000);
+</script>
+</body>
+</html>

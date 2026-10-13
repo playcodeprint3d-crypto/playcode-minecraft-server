@@ -1,0 +1,28 @@
+# Minecraft Server Properties — Play Code Lab
+# Optimizada para rendimiento en Codespaces (2 cores / 8GB RAM) y modo libre (No-Premium + Premium)
+server-port=25565
+online-mode=false
+enforce-secure-profile=false
+white-list=false
+max-players=10
+motd=\u00a71[\u00a7ePlay Code\u00a71] \u00a7bLaboratorio de Minecraft \u00a77- \u00a7aEn Linea
+gamemode=survival
+difficulty=normal
+pvp=true
+spawn-protection=0
+view-distance=8
+simulation-distance=6
+sync-chunk-writes=false
+network-compression-threshold=256
+enable-rcon=true
+rcon.port=25575
+rcon.password=playcode123
+broadcast-rcon-to-ops=false
+enable-query=false
+enable-status=true
+max-tick-time=60000
+allow-flight=true
+allow-nether=true
+generate-structures=true
+level-name=world
+level-type=minecraft:normal

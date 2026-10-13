@@ -1,0 +1,26 @@
+{
+  "name": "Play Code — Minecraft Server",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "codespace",
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "forwardPorts": [25565, 9000],
+  "portsAttributes": {
+    "25565": {
+      "label": "Minecraft Java Server Port",
+      "onAutoForward": "silent",
+      "visibility": "private"
+    },
+    "9000": {
+      "label": "Play Code Minecraft Web Panel & API",
+      "onAutoForward": "silent",
+      "visibility": "public"
+    }
+  },
+  "postStartCommand": "chmod +x /workspaces/playcode-minecraft-server/scripts/*.sh /workspaces/playcode-minecraft-server/scripts/*.py 2>/dev/null || true; /workspaces/playcode-minecraft-server/scripts/start-server.sh"
+}
