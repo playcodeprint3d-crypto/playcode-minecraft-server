@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Play Code — Minecraft Server Master Launcher
+# Play Code — Minecraft Server Master Launcher (Self-Healing)
 # ==============================================================================
 set -e
 
@@ -10,6 +10,13 @@ SERVER_DIR="$BASE_DIR/server"
 CONFIG_DIR="$BASE_DIR/config"
 
 mkdir -p "$SERVER_DIR"
+
+# 0. Verificación y auto-reparación de dependencias básicas
+if ! command -v playit >/dev/null 2>&1; then
+    echo "[!] Playit no encontrado. Instalando cliente de emergencia..."
+    sudo curl -SsL "https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64" -o /usr/local/bin/playit 2>/dev/null || true
+    sudo chmod a+rx /usr/local/bin/playit 2>/dev/null || true
+fi
 
 # 1. Determinar versión de Minecraft
 MC_VERSION="${MINECRAFT_VERSION:-${MC_VERSION:-1.20.4}}"
@@ -32,7 +39,6 @@ if [ ! -f "$SERVER_DIR/server.properties" ]; then
 fi
 
 # 5. Seleccionar la versión de Java adecuada
-# Parsear versión mayor y menor (ej: 1.8.8 -> 8, 1.20.4 -> 20)
 MAJOR=$(echo "$MC_VERSION" | cut -d. -f2)
 PATCH=$(echo "$MC_VERSION" | cut -d. -f3)
 [ -z "$PATCH" ] && PATCH=0
@@ -43,24 +49,37 @@ if [ "$MAJOR" -le 16 ]; then
     echo "[+] Minecraft <= 1.16 detectado: Seleccionando Java 8"
     if [ -x "/usr/lib/jvm/java-8-openjdk-amd64/bin/java" ]; then
         JAVA_BIN="/usr/lib/jvm/java-8-openjdk-amd64/bin/java"
+    elif [ -x "/usr/lib/jvm/java-8-openjdk/bin/java" ]; then
+        JAVA_BIN="/usr/lib/jvm/java-8-openjdk/bin/java"
+    else
+        echo "[!] Instalando Java 8 de emergencia..."
+        sudo apt-get update && sudo apt-get install -y openjdk-8-jre-headless
+        JAVA_BIN="/usr/lib/jvm/java-8-openjdk-amd64/bin/java"
     fi
-elif [ "$MAJOR" -eq 20 ] && [ "$PATCH" -ge 5 ]; then
+elif [ "$MAJOR" -ge 21 ] || { [ "$MAJOR" -eq 20 ] && [ "$PATCH" -ge 5 ]; }; then
     echo "[+] Minecraft 1.20.5+ detectado: Seleccionando Java 21"
     if [ -x "/opt/java-21/bin/java" ]; then
         JAVA_BIN="/opt/java-21/bin/java"
     elif [ -x "/usr/lib/jvm/java-21-openjdk-amd64/bin/java" ]; then
         JAVA_BIN="/usr/lib/jvm/java-21-openjdk-amd64/bin/java"
-    fi
-elif [ "$MAJOR" -ge 21 ]; then
-    echo "[+] Minecraft 1.21+ detectado: Seleccionando Java 21"
-    if [ -x "/opt/java-21/bin/java" ]; then
+    else
+        echo "[!] Descargando Java 21 Temurin de emergencia..."
+        sudo mkdir -p /opt/java-21
+        sudo curl -SsL "https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jre/hotspot/normal/eclipse" -o /tmp/temurin21.tar.gz
+        sudo tar -xzf /tmp/temurin21.tar.gz -C /opt/java-21 --strip-components=1
+        sudo rm -f /tmp/temurin21.tar.gz
+        sudo chmod -R a+rX /opt/java-21
         JAVA_BIN="/opt/java-21/bin/java"
-    elif [ -x "/usr/lib/jvm/java-21-openjdk-amd64/bin/java" ]; then
-        JAVA_BIN="/usr/lib/jvm/java-21-openjdk-amd64/bin/java"
     fi
 else
     echo "[+] Minecraft 1.17 - 1.20.4 detectado: Seleccionando Java 17"
     if [ -x "/usr/lib/jvm/java-17-openjdk-amd64/bin/java" ]; then
+        JAVA_BIN="/usr/lib/jvm/java-17-openjdk-amd64/bin/java"
+    elif [ -x "/usr/lib/jvm/java-17-openjdk/bin/java" ]; then
+        JAVA_BIN="/usr/lib/jvm/java-17-openjdk/bin/java"
+    else
+        echo "[!] Instalando Java 17 de emergencia..."
+        sudo apt-get update && sudo apt-get install -y openjdk-17-jre-headless
         JAVA_BIN="/usr/lib/jvm/java-17-openjdk-amd64/bin/java"
     fi
 fi
