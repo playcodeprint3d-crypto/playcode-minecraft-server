@@ -31,20 +31,26 @@ if [ -z "${CODESPACE_NAME:-}" ] && [ -f "/workspaces/.codespaces/shared/environm
     CODESPACE_NAME=$(grep -o '"CODESPACE_NAME": "[^"]*"' /workspaces/.codespaces/shared/environment-variables.json | head -n 1 | cut -d'"' -f4 || true)
 fi
 
-# 1. Determinar versión de Minecraft (desde LMS o variable de entorno)
-CONFIG_URL="https://edu.playcode.com.ar/wp-json/playcode/v1/minecraft-config"
-
-if [ -n "${PLAYCODE_USER_ID:-}" ]; then
-    LOOKUP_QUERY="user_id=${PLAYCODE_USER_ID}"
-    echo "[+] Consultando versión para user_id ${PLAYCODE_USER_ID}..."
-else
-    LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
-    echo "[+] Consultando versión por codespace/login ($LOOKUP_QUERY)..."
+# 1. Determinar versión de Minecraft
+# PRIORIDAD 1: GitHub Codespaces Secrets (Inmune a WAF)
+if [ -z "${PLAYCODE_VERSION:-}" ] && [ -f "/workspaces/.codespaces/shared/user-secrets-envs.json" ]; then
+    PLAYCODE_VERSION=$(grep -o '"PLAYCODE_VERSION":"[^"]*"' /workspaces/.codespaces/shared/user-secrets-envs.json | head -n 1 | cut -d'"' -f4 || true)
 fi
 
-LMS_VERSION=$(curl -s --connect-timeout 5 "${CONFIG_URL}?${LOOKUP_QUERY}" 2>/dev/null | grep -o '"version":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)
-
-MC_VERSION="${LMS_VERSION:-${MINECRAFT_VERSION:-${MC_VERSION:-1.21.1}}}"
+if [ -n "${PLAYCODE_VERSION:-}" ]; then
+    echo "[+] Versión detectada desde GitHub Secrets: $PLAYCODE_VERSION"
+    MC_VERSION="$PLAYCODE_VERSION"
+else
+    # PRIORIDAD 2: LMS o Fallback
+    CONFIG_URL="https://edu.playcode.com.ar/wp-json/playcode/v1/minecraft-config"
+    if [ -n "${PLAYCODE_USER_ID:-}" ]; then
+        LOOKUP_QUERY="user_id=${PLAYCODE_USER_ID}"
+    else
+        LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
+    fi
+    LMS_VERSION=$(curl -s --connect-timeout 4 "${CONFIG_URL}?${LOOKUP_QUERY}" 2>/dev/null | grep -o '"version":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)
+    MC_VERSION="${LMS_VERSION:-${MINECRAFT_VERSION:-${MC_VERSION:-1.21.1}}}"
+fi
 echo "=========================================================="
 echo " [>] PLAY CODE MINECRAFT SERVER LAUNCHER"
 echo " [>] Versión solicitada: $MC_VERSION"

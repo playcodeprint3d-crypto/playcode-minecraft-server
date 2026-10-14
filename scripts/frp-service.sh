@@ -27,31 +27,38 @@ if [ -z "${CODESPACE_NAME:-}" ] && [ -f "/workspaces/.codespaces/shared/environm
     CODESPACE_NAME=$(grep -o '"CODESPACE_NAME": "[^"]*"' /workspaces/.codespaces/shared/environment-variables.json | head -n 1 | cut -d'"' -f4 || true)
 fi
 
-# 0. Consultar configuración dinámica desde la plataforma Play Code
-CONFIG_URL="https://edu.playcode.com.ar/wp-json/playcode/v1/minecraft-config"
-
-if [ -n "${PLAYCODE_USER_ID:-}" ]; then
-    LOOKUP_QUERY="user_id=${PLAYCODE_USER_ID}"
-    echo "[+] Usando user_id inyectado: ${PLAYCODE_USER_ID}"
-else
-    LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
-    echo "[+] Consultando configuración por codespace/login ($LOOKUP_QUERY)..."
+# 0. Determinar puerto asignado al alumno
+# PRIORIDAD 1: GitHub Codespaces Secrets (Inyectado directamente por GitHub, 100% inmune a WAF)
+if [ -z "${PLAYCODE_PORT:-}" ] && [ -f "/workspaces/.codespaces/shared/user-secrets-envs.json" ]; then
+    PLAYCODE_PORT=$(grep -o '"PLAYCODE_PORT":"[^"]*"' /workspaces/.codespaces/shared/user-secrets-envs.json | head -n 1 | cut -d'"' -f4 || true)
 fi
 
-CFG_JSON=$(curl -s --connect-timeout 5 "${CONFIG_URL}?${LOOKUP_QUERY}" || true)
-echo "[+] Config recibida: ${CFG_JSON}"
+if [ -n "${PLAYCODE_PORT:-}" ]; then
+    REMOTE_PORT="$PLAYCODE_PORT"
+    echo "[+] [OK] Puerto asignado desde GitHub Codespaces Secrets: $REMOTE_PORT"
+else
+    # PRIORIDAD 2: Consultar al LMS en Play Code (Fallback)
+    CONFIG_URL="https://edu.playcode.com.ar/wp-json/playcode/v1/minecraft-config"
 
-if [ -n "$CFG_JSON" ]; then
-    FETCH_PORT=$(echo "$CFG_JSON" | grep -o '"port":[0-9]*' | head -n 1 | cut -d: -f2 || true)
-    FETCH_HOST=$(echo "$CFG_JSON" | grep -o '"relay_host":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)
-    if [ -n "$FETCH_PORT" ]; then
-        REMOTE_PORT="$FETCH_PORT"
-        echo "[+] Puerto asignado desde LMS: $REMOTE_PORT"
+    if [ -n "${PLAYCODE_USER_ID:-}" ]; then
+        LOOKUP_QUERY="user_id=${PLAYCODE_USER_ID}"
     else
-        echo "[!] No se pudo extraer el puerto del JSON. Usando fallback: $REMOTE_PORT"
+        LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
     fi
-    if [ -n "$FETCH_HOST" ]; then
-        FRP_SERVER="$FETCH_HOST"
+
+    echo "[+] Consultando configuración por LMS ($LOOKUP_QUERY)..."
+    CFG_JSON=$(curl -s --connect-timeout 4 "${CONFIG_URL}?${LOOKUP_QUERY}" || true)
+
+    if [ -n "$CFG_JSON" ]; then
+        FETCH_PORT=$(echo "$CFG_JSON" | grep -o '"port":[0-9]*' | head -n 1 | cut -d: -f2 || true)
+        FETCH_HOST=$(echo "$CFG_JSON" | grep -o '"relay_host":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)
+        if [ -n "$FETCH_PORT" ]; then
+            REMOTE_PORT="$FETCH_PORT"
+            echo "[+] Puerto asignado desde LMS: $REMOTE_PORT"
+        fi
+        if [ -n "$FETCH_HOST" ]; then
+            FRP_SERVER="$FETCH_HOST"
+        fi
     fi
 fi
 
