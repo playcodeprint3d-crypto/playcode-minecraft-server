@@ -18,6 +18,19 @@ if ! command -v playit >/dev/null 2>&1; then
     sudo chmod a+rx /usr/local/bin/playit 2>/dev/null || true
 fi
 
+# Auto-detectar variables de entorno de GitHub Codespaces si no están en el subshell
+if [ -f "/workspaces/.codespaces/shared/.env" ]; then
+    set -a
+    source /workspaces/.codespaces/shared/.env 2>/dev/null || true
+    set +a
+fi
+if [ -z "${GITHUB_USER:-}" ] && [ -f "/workspaces/.codespaces/shared/user-secrets-envs.json" ]; then
+    GITHUB_USER=$(grep -o '"GITHUB_USER":"[^"]*"' /workspaces/.codespaces/shared/user-secrets-envs.json | head -n 1 | cut -d'"' -f4 || true)
+fi
+if [ -z "${CODESPACE_NAME:-}" ] && [ -f "/workspaces/.codespaces/shared/environment-variables.json" ]; then
+    CODESPACE_NAME=$(grep -o '"CODESPACE_NAME": "[^"]*"' /workspaces/.codespaces/shared/environment-variables.json | head -n 1 | cut -d'"' -f4 || true)
+fi
+
 # 1. Determinar versión de Minecraft (desde LMS o variable de entorno)
 CONFIG_URL="https://edu.playcode.com.ar/wp-json/playcode/v1/minecraft-config"
 
@@ -26,7 +39,7 @@ if [ -n "${PLAYCODE_USER_ID:-}" ]; then
     echo "[+] Consultando versión para user_id ${PLAYCODE_USER_ID}..."
 else
     LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
-    echo "[+] Fallback: consultando versión por codespace/login ($LOOKUP_QUERY)..."
+    echo "[+] Consultando versión por codespace/login ($LOOKUP_QUERY)..."
 fi
 
 LMS_VERSION=$(curl -s --connect-timeout 5 "${CONFIG_URL}?${LOOKUP_QUERY}" 2>/dev/null | grep -o '"version":"[^"]*"' | head -n 1 | cut -d'"' -f4 || true)

@@ -14,10 +14,20 @@ FRP_SERVER="${FRP_SERVER_ADDR:-35.209.249.255}"
 FRP_PORT="${FRP_SERVER_PORT:-7000}"
 FRP_TOKEN="${FRP_AUTH_TOKEN:-PlayCodeMcSecret2026!}"
 REMOTE_PORT="${FRP_REMOTE_PORT:-25565}"
-CLIENT_NAME="${FRP_CLIENT_NAME:-mc-$(hostname | cut -c 1-12)}"
+# Auto-detectar variables de entorno de GitHub Codespaces si no están en el subshell
+if [ -f "/workspaces/.codespaces/shared/.env" ]; then
+    set -a
+    source /workspaces/.codespaces/shared/.env 2>/dev/null || true
+    set +a
+fi
+if [ -z "${GITHUB_USER:-}" ] && [ -f "/workspaces/.codespaces/shared/user-secrets-envs.json" ]; then
+    GITHUB_USER=$(grep -o '"GITHUB_USER":"[^"]*"' /workspaces/.codespaces/shared/user-secrets-envs.json | head -n 1 | cut -d'"' -f4 || true)
+fi
+if [ -z "${CODESPACE_NAME:-}" ] && [ -f "/workspaces/.codespaces/shared/environment-variables.json" ]; then
+    CODESPACE_NAME=$(grep -o '"CODESPACE_NAME": "[^"]*"' /workspaces/.codespaces/shared/environment-variables.json | head -n 1 | cut -d'"' -f4 || true)
+fi
 
 # 0. Consultar configuración dinámica desde la plataforma Play Code
-# Preferir PLAYCODE_USER_ID inyectado en la creación del Codespace (más confiable)
 CONFIG_URL="https://edu.playcode.com.ar/wp-json/playcode/v1/minecraft-config"
 
 if [ -n "${PLAYCODE_USER_ID:-}" ]; then
@@ -25,7 +35,7 @@ if [ -n "${PLAYCODE_USER_ID:-}" ]; then
     echo "[+] Usando user_id inyectado: ${PLAYCODE_USER_ID}"
 else
     LOOKUP_QUERY="codespace=${CODESPACE_NAME}&login=${GITHUB_USER}"
-    echo "[+] Fallback: consultando por codespace/login ($LOOKUP_QUERY)..."
+    echo "[+] Consultando configuración por codespace/login ($LOOKUP_QUERY)..."
 fi
 
 CFG_JSON=$(curl -s --connect-timeout 5 "${CONFIG_URL}?${LOOKUP_QUERY}" || true)
@@ -44,6 +54,10 @@ if [ -n "$CFG_JSON" ]; then
         FRP_SERVER="$FETCH_HOST"
     fi
 fi
+
+# Nombre de proxy único garantizado (mc-puerto, ej: mc-20019) para evitar colisiones en FRPS
+CLIENT_NAME="mc-${REMOTE_PORT}"
+
 
 
 echo "[+] Relay Host: $FRP_SERVER | Puerto Remoto Asignado: $REMOTE_PORT"
